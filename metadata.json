@@ -1,0 +1,6 @@
+{
+  "name": "Bridge",
+  "description": "A compassionate first-step support assistant for people experiencing emotional distress, guiding them toward human support.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": []
+}
