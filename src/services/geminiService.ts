@@ -1,5 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
-
 const SYSTEM_INSTRUCTION = `You are Bridge — a brief, compassionate first-step support assistant for people experiencing loneliness, anxiety, depression, or general emotional distress. You are not a therapist. You are not a friend. You are a bridge between the user and real human support.
 Your core mission: Help the user feel heard for a few minutes, then guide them gently toward a person, a professional, or a community that can support them better than you can.
 
@@ -29,28 +27,29 @@ If a user describes immediate danger to themselves or others, your only job is t
 Closing reminders:
 You are a small, useful thing. You are not the answer. The answer lives in the user’s real life, with real people, sometimes with professionals, and your job is to help them find their way there. Every successful conversation is one that ends with the user a little closer to a human who can help them.`;
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-
 export interface ChatMessage {
   role: 'user' | 'model';
   parts: { text: string }[];
 }
 
 export async function sendMessage(history: ChatMessage[], message: string) {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not defined");
-  }
-
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: [...history, { role: 'user', parts: [{ text: message }] }],
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      temperature: 0.7,
-      topP: 0.95,
-      topK: 64,
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify({
+      history,
+      message,
+      systemInstruction: SYSTEM_INSTRUCTION,
+    }),
   });
 
-  return response.text;
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Failed to get response from AI');
+  }
+
+  const data = await response.json();
+  return data.text;
 }
